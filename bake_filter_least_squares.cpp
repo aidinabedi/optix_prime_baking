@@ -283,7 +283,8 @@ void filter_mesh_least_squares(
     const bake::SampleInfo& info = ao_samples.sample_infos[i];
     const int3& tri = tri_vertex_indices[info.tri_idx];
 
-    const float val = ao_values[i] * info.dA;
+    const float dA2 = info.dA * info.dA;
+    const float val = ao_values[i] * dA2;
 
     vertex_ao[tri.x] += info.bary[0] * val;
     vertex_ao[tri.y] += info.bary[1] * val;
@@ -292,25 +293,25 @@ void filter_mesh_least_squares(
     // Note: the reference paper suggests computing the mass matrix analytically.
     // Building it from samples gave smoother results for low numbers of samples per face.
   
-    triplet_map[ std::make_pair( tri.x, tri.x ) ] += static_cast<ScalarType>( info.bary[0]*info.bary[0]*info.dA );
-    triplet_map[ std::make_pair( tri.y, tri.y ) ] += static_cast<ScalarType>( info.bary[1]*info.bary[1]*info.dA );
-    triplet_map[ std::make_pair( tri.z, tri.z ) ] += static_cast<ScalarType>( info.bary[2]*info.bary[2]*info.dA );
+    triplet_map[ std::make_pair( tri.x, tri.x ) ] += static_cast<ScalarType>( info.bary[0]*info.bary[0]*dA2 );
+    triplet_map[ std::make_pair( tri.y, tri.y ) ] += static_cast<ScalarType>( info.bary[1]*info.bary[1]*dA2 );
+    triplet_map[ std::make_pair( tri.z, tri.z ) ] += static_cast<ScalarType>( info.bary[2]*info.bary[2]*dA2 );
     
 
     {
-      const double elem = static_cast<ScalarType>(info.bary[0]*info.bary[1]*info.dA);
+      const double elem = static_cast<ScalarType>(info.bary[0]*info.bary[1]*dA2);
       triplet_map[ std::make_pair( tri.x, tri.y ) ] += elem;
       triplet_map[ std::make_pair( tri.y, tri.x ) ] += elem;
     }
 
     {
-      const double elem = static_cast<ScalarType>(info.bary[1]*info.bary[2]*info.dA);
+      const double elem = static_cast<ScalarType>(info.bary[1]*info.bary[2]*dA2);
       triplet_map[ std::make_pair( tri.y, tri.z ) ] += elem;
       triplet_map[ std::make_pair( tri.z, tri.y ) ] += elem;
     }
 
     {
-      const double elem = static_cast<ScalarType>(info.bary[2]*info.bary[0]*info.dA);
+      const double elem = static_cast<ScalarType>(info.bary[2]*info.bary[0]*dA2);
       triplet_map[ std::make_pair( tri.x, tri.z ) ] += elem;
       triplet_map[ std::make_pair( tri.z, tri.x ) ] += elem;
     }
